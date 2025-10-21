@@ -101,7 +101,7 @@ class PnCoder {
         const message = this.messageInput.value.trim();
         if (!message || !this.apiKey) {
             if (!this.apiKey) {
-                this.showNotification('Please set your API key in settings first!', 'error');
+                this.showNotification('Please set your OpenRouter API key in settings first! Click the gear icon to configure.', 'error');
                 this.openSettings();
             }
             return;
@@ -122,7 +122,21 @@ class PnCoder {
             this.addMessage('assistant', response);
         } catch (error) {
             console.error('API Error:', error);
-            this.addMessage('assistant', `Sorry, I encountered an error: ${error.message}`);
+            let errorMessage = 'Sorry, I encountered an error. ';
+            
+            if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+                errorMessage += 'Please check your API key in settings.';
+            } else if (error.message.includes('403') || error.message.includes('Forbidden')) {
+                errorMessage += 'API access denied. Please check your API key and permissions.';
+            } else if (error.message.includes('429')) {
+                errorMessage += 'Rate limit exceeded. Please try again later.';
+            } else if (error.message.includes('Provider returned error')) {
+                errorMessage += 'The AI provider returned an error. Please check your API key and try again.';
+            } else {
+                errorMessage += error.message;
+            }
+            
+            this.addMessage('assistant', errorMessage);
         } finally {
             this.hideLoading();
         }
