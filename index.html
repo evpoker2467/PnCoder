@@ -86,21 +86,34 @@
                 <div class="modal-body">
                     <div class="setting-group">
                         <label for="apiKey">OpenRouter API Key:</label>
-                        <input type="password" id="apiKey" placeholder="Enter your OpenRouter API key">
-                        <small>Your API key is stored locally and never shared.</small>
+                        <input type="text" id="apiKey" readonly placeholder="Configured via environment variable">
+                        <small>API key is configured via OPENROUTER_API_KEY environment variable.</small>
                     </div>
                     <div class="setting-group">
-                        <label for="siteUrl">Site URL (Optional):</label>
-                        <input type="url" id="siteUrl" placeholder="https://your-site.com">
+                        <label for="siteUrl">Site URL:</label>
+                        <input type="url" id="siteUrl" readonly placeholder="Configured via environment variable">
+                        <small>Set via SITE_URL environment variable (optional).</small>
                     </div>
                     <div class="setting-group">
-                        <label for="siteName">Site Name (Optional):</label>
-                        <input type="text" id="siteName" placeholder="Your Site Name">
+                        <label for="siteName">Site Name:</label>
+                        <input type="text" id="siteName" readonly placeholder="Configured via environment variable">
+                        <small>Set via SITE_NAME environment variable (optional).</small>
+                    </div>
+                    <div class="setting-group">
+                        <div class="env-info">
+                            <h4>Environment Variables</h4>
+                            <p>This application uses environment variables for configuration:</p>
+                            <ul>
+                                <li><code>OPENROUTER_API_KEY</code> - Your OpenRouter API key (required)</li>
+                                <li><code>SITE_URL</code> - Your site URL (optional)</li>
+                                <li><code>SITE_NAME</code> - Your site name (optional)</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button id="testAPI" class="btn btn-secondary">Test API Connection</button>
-                    <button id="saveSettings" class="btn btn-primary">Save Settings</button>
+                    <button id="closeSettings" class="btn btn-primary">Close</button>
                 </div>
             </div>
         </div>

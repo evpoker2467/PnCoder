@@ -1,9 +1,10 @@
 // PnCoder - AI Programming Assistant
 class PnCoder {
     constructor() {
-        this.apiKey = localStorage.getItem('pnCoder_apiKey') || '';
-        this.siteUrl = localStorage.getItem('pnCoder_siteUrl') || '';
-        this.siteName = localStorage.getItem('pnCoder_siteName') || 'PnCoder';
+        // Use environment variables for API configuration
+        this.apiKey = this.getEnvironmentVariable('OPENROUTER_API_KEY') || '';
+        this.siteUrl = this.getEnvironmentVariable('SITE_URL') || window.location.origin;
+        this.siteName = this.getEnvironmentVariable('SITE_NAME') || 'PnCoder';
         this.messages = JSON.parse(localStorage.getItem('pnCoder_messages') || '[]');
         
         this.initializeElements();
@@ -11,6 +12,19 @@ class PnCoder {
         this.loadSettings();
         this.renderMessages();
         this.updateCharCount();
+    }
+
+    getEnvironmentVariable(name) {
+        // Try to get from window object (set by Netlify)
+        if (window[name]) {
+            return window[name];
+        }
+        // Try to get from process.env (if available)
+        if (typeof process !== 'undefined' && process.env && process.env[name]) {
+            return process.env[name];
+        }
+        // Fallback to empty string
+        return '';
     }
 
     initializeElements() {
@@ -102,8 +116,7 @@ class PnCoder {
         const message = this.messageInput.value.trim();
         if (!message || !this.apiKey) {
             if (!this.apiKey) {
-                this.showNotification('Please set your OpenRouter API key in settings first! Click the gear icon to configure.', 'error');
-                this.openSettings();
+                this.showNotification('API key not configured. Please contact the administrator to set up the OPENROUTER_API_KEY environment variable.', 'error');
             }
             return;
         }
@@ -310,9 +323,10 @@ class PnCoder {
 
     openSettings() {
         this.settingsModal.classList.add('show');
-        this.apiKeyInput.value = this.apiKey;
-        this.siteUrlInput.value = this.siteUrl;
-        this.siteNameInput.value = this.siteName;
+        // Show current environment variable values (masked for security)
+        this.apiKeyInput.value = this.apiKey ? '••••••••••••••••' : 'Not configured';
+        this.siteUrlInput.value = this.siteUrl || 'Not configured';
+        this.siteNameInput.value = this.siteName || 'Not configured';
     }
 
     closeSettings() {
@@ -320,23 +334,13 @@ class PnCoder {
     }
 
     saveSettings() {
-        this.apiKey = this.apiKeyInput.value.trim();
-        this.siteUrl = this.siteUrlInput.value.trim();
-        this.siteName = this.siteNameInput.value.trim();
-        
-        localStorage.setItem('pnCoder_apiKey', this.apiKey);
-        localStorage.setItem('pnCoder_siteUrl', this.siteUrl);
-        localStorage.setItem('pnCoder_siteName', this.siteName);
-        
-        this.updateSendButton();
+        // Settings are now read-only, just close the modal
         this.closeSettings();
-        this.showNotification('Settings saved successfully!', 'success');
+        this.showNotification('Settings are configured via environment variables.', 'info');
     }
 
     loadSettings() {
-        this.apiKeyInput.value = this.apiKey;
-        this.siteUrlInput.value = this.siteUrl;
-        this.siteNameInput.value = this.siteName;
+        // Settings are now loaded from environment variables
         this.updateSendButton();
     }
 

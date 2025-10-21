@@ -1,0 +1,22 @@
+{
+  "name": "pncoder",
+  "version": "1.0.0",
+  "description": "AI Programming Assistant powered by Qwen3 Coder",
+  "main": "index.html",
+  "scripts": {
+    "build": "node inject-env.js",
+    "start": "echo 'Open index.html in your browser'"
+  },
+  "keywords": [
+    "ai",
+    "programming",
+    "assistant",
+    "qwen3",
+    "coder"
+  ],
+  "author": "PnCoder Developer",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

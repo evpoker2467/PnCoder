@@ -20,14 +20,14 @@ PnCoder is a modern web application that connects to the Qwen3 Coder API to prov
 
 ### Option 1: Use the Live Demo
 1. Visit the live demo URL
-2. Click the Settings button (⚙️)
-3. Enter your OpenRouter API key
-4. Start chatting with the AI!
+2. The API key is pre-configured via environment variables
+3. Start chatting with the AI immediately!
 
 ### Option 2: Deploy Your Own
 
 #### Prerequisites
 - An OpenRouter API key (get one at [openrouter.ai](https://openrouter.ai))
+- A Netlify account (free)
 - A GitHub account
 - A Netlify account
 
@@ -42,12 +42,19 @@ PnCoder is a modern web application that connects to the Qwen3 Coder API to prov
 2. **Deploy to Netlify**
    - Connect your GitHub repository to Netlify
    - Netlify will automatically deploy the site
-   - No build configuration needed!
+   - The build process will inject environment variables
 
-3. **Configure your site**
+3. **Configure Environment Variables**
    - Go to your Netlify dashboard
-   - Navigate to Site settings > Domain management
-   - Set up a custom domain (optional)
+   - Navigate to Site settings > Environment variables
+   - Add the following variables:
+     - `OPENROUTER_API_KEY`: Your OpenRouter API key
+     - `SITE_URL`: Your site URL (optional)
+     - `SITE_NAME`: Your site name (optional)
+
+4. **Redeploy your site**
+   - Trigger a new deployment to apply the environment variables
+   - Your site will now use the configured API key automatically
 
 ## API Configuration
 
@@ -57,7 +64,14 @@ PnCoder is a modern web application that connects to the Qwen3 Coder API to prov
 2. Sign up for an account
 3. Navigate to the API keys section
 4. Create a new API key
-5. Copy the key and paste it into PnCoder's settings
+5. Add it as an environment variable in Netlify
+
+### Environment Variables
+
+PnCoder uses the following environment variables:
+- **OPENROUTER_API_KEY** (required): Your OpenRouter API key
+- **SITE_URL** (optional): Your site URL for API tracking
+- **SITE_NAME** (optional): Your site name for API tracking
 
 ### API Usage
 
@@ -71,11 +85,9 @@ PnCoder uses the following API configuration:
 
 ### Basic Usage
 1. Open the application
-2. Click the Settings button (⚙️) in the top right
-3. Enter your OpenRouter API key
-4. Optionally set your site URL and name
-5. Click "Save Settings"
-6. Start asking programming questions!
+2. The API key is automatically configured via environment variables
+3. Start asking programming questions immediately!
+4. Click the Settings button (⚙️) to view configuration status
 
 ### Example Prompts
 - "Create a React component for a todo list"

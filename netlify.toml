@@ -1,26 +1,26 @@
 [build]
   publish = "."
-  command = "echo 'No build step required for static site'"
+  command = "node inject-env.js"
 
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-XSS-Protection = "1; mode=block"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
+[build.environment]
+  # These environment variables will be set in Netlify dashboard
+  # OPENROUTER_API_KEY = "your-api-key-here"
+  # SITE_URL = "https://your-site.netlify.app"
+  # SITE_NAME = "PnCoder"
 
-[[headers]]
-  for = "*.js"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000"
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
 
-[[headers]]
-  for = "*.css"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000"
+[context.production]
+  # Production environment variables
+  # Set these in Netlify dashboard under Site settings > Environment variables
 
-[[headers]]
-  for = "*.html"
-  [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
+[context.deploy-preview]
+  # Deploy preview environment variables
+  # These can be different from production for testing
+
+[context.branch-deploy]
+  # Branch deploy environment variables
+  # These can be different from production for testing
