@@ -9,7 +9,6 @@ class PnCoder {
         
         this.initializeElements();
         this.bindEvents();
-        this.loadSettings();
         this.renderMessages();
         this.updateCharCount();
         
@@ -45,15 +44,8 @@ class PnCoder {
         this.messageInput = document.getElementById('messageInput');
         this.sendBtn = document.getElementById('sendBtn');
         this.clearChatBtn = document.getElementById('clearChat');
-        this.settingsBtn = document.getElementById('settingsBtn');
-        this.settingsModal = document.getElementById('settingsModal');
-        this.closeSettingsBtn = document.getElementById('closeSettings');
-        this.saveSettingsBtn = document.getElementById('saveSettings');
         this.loadingOverlay = document.getElementById('loadingOverlay');
         this.charCount = document.querySelector('.char-count');
-        this.apiKeyInput = document.getElementById('apiKey');
-        this.siteUrlInput = document.getElementById('siteUrl');
-        this.siteNameInput = document.getElementById('siteName');
     }
 
     bindEvents() {
@@ -75,19 +67,6 @@ class PnCoder {
 
         // Clear chat
         this.clearChatBtn.addEventListener('click', () => this.clearChat());
-
-        // Settings modal
-        this.settingsBtn.addEventListener('click', () => this.openSettings());
-        this.closeSettingsBtn.addEventListener('click', () => this.closeSettings());
-        this.saveSettingsBtn.addEventListener('click', () => this.saveSettings());
-        document.getElementById('testAPI').addEventListener('click', () => this.testAPI());
-
-        // Close modal on outside click
-        this.settingsModal.addEventListener('click', (e) => {
-            if (e.target === this.settingsModal) {
-                this.closeSettings();
-            }
-        });
 
         // Example prompts
         document.querySelectorAll('.example-prompt').forEach(btn => {
@@ -487,28 +466,6 @@ Please contact the administrator to verify the API configuration.`);
         }
     }
 
-    openSettings() {
-        this.settingsModal.classList.add('show');
-        // Show current environment variable values (masked for security)
-        this.apiKeyInput.value = this.apiKey ? '••••••••••••••••' : 'Not configured';
-        this.siteUrlInput.value = this.siteUrl || 'Not configured';
-        this.siteNameInput.value = this.siteName || 'Not configured';
-    }
-
-    closeSettings() {
-        this.settingsModal.classList.remove('show');
-    }
-
-    saveSettings() {
-        // Settings are now read-only, just close the modal
-        this.closeSettings();
-        this.showNotification('Settings are configured via environment variables.', 'info');
-    }
-
-    loadSettings() {
-        // Settings are now loaded from environment variables
-        this.updateSendButton();
-    }
 
     saveMessages() {
         localStorage.setItem('pnCoder_messages', JSON.stringify(this.messages));
@@ -553,58 +510,6 @@ Please contact the administrator to verify the API configuration.`);
         }, 3000);
     }
 
-    // Test function to debug API connection
-    async testAPI() {
-        console.log('Testing API connection...');
-        console.log('API Key:', this.apiKey ? 'Present' : 'Missing');
-        console.log('Site URL:', this.siteUrl);
-        console.log('Site Name:', this.siteName);
-        
-        if (!this.apiKey) {
-            this.showNotification('API key not configured. Please set OPENROUTER_API_KEY environment variable.', 'error');
-            return;
-        }
-        
-        try {
-            // Test with a simple, reliable model first
-            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${this.apiKey}`,
-                    'HTTP-Referer': this.siteUrl || window.location.origin,
-                    'X-Title': this.siteName || 'PnCoder',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    model: 'qwen/qwen-2.5-coder-32b-instruct:free',
-                    messages: [
-                        {
-                            role: 'user',
-                            content: 'Hello, this is a test message.'
-                        }
-                    ],
-                    max_tokens: 50,
-                    temperature: 0.7
-                })
-            });
-            
-            console.log('Test Response Status:', response.status);
-            console.log('Test Response Headers:', response.headers);
-            
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                console.error('Test API Error:', errorData);
-                this.showNotification(`API Test Failed: ${errorData.error?.message || response.statusText}`, 'error');
-            } else {
-                const data = await response.json();
-                console.log('Test API Success:', data);
-                this.showNotification('API Test Successful!', 'success');
-            }
-        } catch (error) {
-            console.error('Test API Error:', error);
-            this.showNotification(`API Test Error: ${error.message}`, 'error');
-        }
-    }
 }
 
 // Add CSS for notifications

@@ -22,10 +22,6 @@
                         <i class="fas fa-trash"></i>
                         Clear Chat
                     </button>
-                    <button id="settingsBtn" class="btn btn-secondary">
-                        <i class="fas fa-cog"></i>
-                        Settings
-                    </button>
                 </div>
             </div>
         </header>
@@ -74,49 +70,6 @@
             </div>
         </main>
 
-        <!-- Settings Modal -->
-        <div id="settingsModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Settings</h2>
-                    <button class="close-btn" id="closeSettings">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="setting-group">
-                        <label for="apiKey">OpenRouter API Key:</label>
-                        <input type="text" id="apiKey" readonly placeholder="Configured via environment variable">
-                        <small>API key is configured via OPENROUTER_API_KEY environment variable.</small>
-                    </div>
-                    <div class="setting-group">
-                        <label for="siteUrl">Site URL:</label>
-                        <input type="url" id="siteUrl" readonly placeholder="Configured via environment variable">
-                        <small>Set via SITE_URL environment variable (optional).</small>
-                    </div>
-                    <div class="setting-group">
-                        <label for="siteName">Site Name:</label>
-                        <input type="text" id="siteName" readonly placeholder="Configured via environment variable">
-                        <small>Set via SITE_NAME environment variable (optional).</small>
-                    </div>
-                    <div class="setting-group">
-                        <div class="env-info">
-                            <h4>Environment Variables</h4>
-                            <p>This application uses environment variables for configuration:</p>
-                            <ul>
-                                <li><code>OPENROUTER_API_KEY</code> - Your OpenRouter API key (required)</li>
-                                <li><code>SITE_URL</code> - Your site URL (optional)</li>
-                                <li><code>SITE_NAME</code> - Your site name (optional)</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button id="testAPI" class="btn btn-secondary">Test API Connection</button>
-                    <button id="closeSettings" class="btn btn-primary">Close</button>
-                </div>
-            </div>
-        </div>
 
         <!-- Loading Overlay -->
         <div id="loadingOverlay" class="loading-overlay">
