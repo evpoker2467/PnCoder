@@ -232,9 +232,9 @@ Please contact the administrator to verify the API configuration.`);
     }
 
     async callAPIWithRetry(message, maxRetries = 2) {
-        // Use the specified Meituan model
+        // Use the specified DeepSeek model
         const models = [
-            'meituan/longcat-flash-chat:free'
+            'tngtech/deepseek-r1t2-chimera:free'
         ];
         
         for (let modelIndex = 0; modelIndex < models.length; modelIndex++) {
