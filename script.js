@@ -53,6 +53,7 @@ class PnCoder {
         this.settingsBtn.addEventListener('click', () => this.openSettings());
         this.closeSettingsBtn.addEventListener('click', () => this.closeSettings());
         this.saveSettingsBtn.addEventListener('click', () => this.saveSettings());
+        document.getElementById('testAPI').addEventListener('click', () => this.testAPI());
 
         // Close modal on outside click
         this.settingsModal.addEventListener('click', (e) => {
@@ -143,6 +144,10 @@ class PnCoder {
     }
 
     async callAPI(message) {
+        console.log('API Key:', this.apiKey ? 'Present' : 'Missing');
+        console.log('Site URL:', this.siteUrl);
+        console.log('Site Name:', this.siteName);
+        
         const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -169,12 +174,17 @@ class PnCoder {
             })
         });
 
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
+            console.error('API Error Response:', errorData);
             throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`);
         }
 
         const data = await response.json();
+        console.log('API Response:', data);
         return data.choices[0].message.content;
     }
 
@@ -342,6 +352,53 @@ class PnCoder {
                 }
             }, 300);
         }, 3000);
+    }
+
+    // Test function to debug API connection
+    async testAPI() {
+        console.log('Testing API connection...');
+        console.log('API Key:', this.apiKey ? 'Present' : 'Missing');
+        console.log('Site URL:', this.siteUrl);
+        console.log('Site Name:', this.siteName);
+        
+        try {
+            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.apiKey}`,
+                    'HTTP-Referer': this.siteUrl || window.location.origin,
+                    'X-Title': this.siteName,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: 'qwen/qwen3-coder:free',
+                    messages: [
+                        {
+                            role: 'user',
+                            content: 'Hello, this is a test message.'
+                        }
+                    ],
+                    max_tokens: 100,
+                    temperature: 0.7
+                })
+            });
+            
+            console.log('Test Response Status:', response.status);
+            console.log('Test Response Headers:', response.headers);
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                console.error('Test API Error:', errorData);
+                this.showNotification(`API Test Failed: ${errorData.error?.message || response.statusText}`, 'error');
+            } else {
+                const data = await response.json();
+                console.log('Test API Success:', data);
+                this.showNotification('API Test Successful!', 'success');
+            }
+        } catch (error) {
+            console.error('Test API Error:', error);
+            this.showNotification(`API Test Error: ${error.message}`, 'error');
+        }
     }
 }
 
