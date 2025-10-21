@@ -232,9 +232,9 @@ Please contact the administrator to verify the API configuration.`);
     }
 
     async callAPIWithRetry(message, maxRetries = 2) {
-        // Use the specified Qwen model
+        // Use the specified Meituan model
         const models = [
-            'qwen/qwen-2.5-coder-32b-instruct:free'
+            'meituan/longcat-flash-chat:free'
         ];
         
         for (let modelIndex = 0; modelIndex < models.length; modelIndex++) {
