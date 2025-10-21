@@ -130,7 +130,16 @@ class PnCoder {
             console.error('API Error:', error);
             
             // If all models fail, provide a helpful fallback message
-            if (error.message.includes('Provider returned error')) {
+            if (error.message.includes('Rate limit exceeded') || error.message.includes('free-models-per-day')) {
+                this.addMessage('assistant', `I've reached the daily limit for free models. This is normal for free tier usage.
+
+**Solutions:**
+• **Wait 24 hours** - Free limits reset daily
+• **Try again later** - Limits may reset sooner
+• **Contact administrator** - Consider upgrading to paid tier for higher limits
+
+The application will automatically try different free models when available.`);
+            } else if (error.message.includes('Provider returned error')) {
                 this.addMessage('assistant', `I'm having trouble connecting to the AI service. This might be due to:
                 
 • **API key issues** - Please check your OPENROUTER_API_KEY environment variable
@@ -232,8 +241,11 @@ Please contact the administrator to verify the API configuration.`);
     }
 
     async callAPIWithRetry(message, maxRetries = 2) {
-        // Use the specified DeepSeek model
+        // Use multiple free models with better availability
         const models = [
+            'microsoft/phi-3-mini-128k-instruct:free',
+            'meta-llama/llama-3.2-3b-instruct:free',
+            'google/gemma-2-2b-it:free',
             'tngtech/deepseek-r1t2-chimera:free'
         ];
         
@@ -253,6 +265,13 @@ Please contact the administrator to verify the API configuration.`);
                         error.message.includes('API access forbidden') ||
                         error.message.includes('Bad request')) {
                         throw error;
+                    }
+                    
+                    // For rate limit errors, try next model immediately
+                    if (error.message.includes('Rate limit exceeded') || 
+                        error.message.includes('free-models-per-day')) {
+                        console.log(`Rate limit hit for ${currentModel}, trying next model...`);
+                        break; // Try next model immediately
                     }
                     
                     // If this is the last attempt for this model, try next model
