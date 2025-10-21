@@ -253,12 +253,9 @@ Please contact the administrator to verify the API configuration.`);
     }
 
     async callAPIWithRetry(message, maxRetries = 2) {
-        // Try different models if the free one fails
+        // Use the specified Qwen model
         const models = [
-            'microsoft/phi-3-mini-128k-instruct:free',
-            'meta-llama/llama-3.2-3b-instruct:free',
-            'google/gemma-2-2b-it:free',
-            'qwen/qwen2.5-coder:7b'
+            'qwen/qwen-2.5-coder-32b-instruct:free'
         ];
         
         for (let modelIndex = 0; modelIndex < models.length; modelIndex++) {
@@ -579,7 +576,7 @@ Please contact the administrator to verify the API configuration.`);
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    model: 'microsoft/phi-3-mini-128k-instruct:free',
+                    model: 'qwen/qwen-2.5-coder-32b-instruct:free',
                     messages: [
                         {
                             role: 'user',
