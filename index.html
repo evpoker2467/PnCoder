@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PnCoder - AI Programming Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-code"></i>
+                    <h1>PnCoder</h1>
+                </div>
+                <div class="header-actions">
+                    <button id="clearChat" class="btn btn-secondary">
+                        <i class="fas fa-trash"></i>
+                        Clear Chat
+                    </button>
+                    <button id="settingsBtn" class="btn btn-secondary">
+                        <i class="fas fa-cog"></i>
+                        Settings
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Chat Container -->
+        <main class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <div class="welcome-message">
+                    <div class="welcome-content">
+                        <i class="fas fa-robot"></i>
+                        <h2>Welcome to PnCoder</h2>
+                        <p>Your AI programming assistant powered by Qwen3 Coder. Ask me to build something, explain code, or help with programming questions!</p>
+                        <div class="example-prompts">
+                            <h3>Try asking:</h3>
+                            <div class="prompt-examples">
+                                <button class="example-prompt" data-prompt="Create a React component for a todo list">Create a React component for a todo list</button>
+                                <button class="example-prompt" data-prompt="Explain how async/await works in JavaScript">Explain async/await in JavaScript</button>
+                                <button class="example-prompt" data-prompt="Help me debug this Python function">Help me debug a Python function</button>
+                                <button class="example-prompt" data-prompt="Build a REST API with Node.js and Express">Build a REST API with Node.js</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea 
+                        id="messageInput" 
+                        placeholder="Ask me anything about programming..." 
+                        rows="1"
+                        maxlength="4000"
+                    ></textarea>
+                    <button id="sendBtn" class="send-btn" disabled>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="input-footer">
+                    <span class="char-count">0/4000</span>
+                    <span class="api-status">
+                        <i class="fas fa-circle"></i>
+                        Connected to Qwen3 Coder
+                    </span>
+                </div>
+            </div>
+        </main>
+
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Settings</h2>
+                    <button class="close-btn" id="closeSettings">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="setting-group">
+                        <label for="apiKey">OpenRouter API Key:</label>
+                        <input type="password" id="apiKey" placeholder="Enter your OpenRouter API key">
+                        <small>Your API key is stored locally and never shared.</small>
+                    </div>
+                    <div class="setting-group">
+                        <label for="siteUrl">Site URL (Optional):</label>
+                        <input type="url" id="siteUrl" placeholder="https://your-site.com">
+                    </div>
+                    <div class="setting-group">
+                        <label for="siteName">Site Name (Optional):</label>
+                        <input type="text" id="siteName" placeholder="Your Site Name">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="saveSettings" class="btn btn-primary">Save Settings</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Thinking...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
