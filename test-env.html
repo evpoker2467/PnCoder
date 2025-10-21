@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Environment Variables Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-result {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { border-left: 4px solid #28a745; }
+        .error { border-left: 4px solid #dc3545; }
+        .warning { border-left: 4px solid #ffc107; }
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>PnCoder Environment Variables Test</h1>
+    
+    <div id="test-results"></div>
+    
+    <script>
+        function testEnvironmentVariables() {
+            const results = document.getElementById('test-results');
+            
+            // Test OPENROUTER_API_KEY
+            const apiKey = window.OPENROUTER_API_KEY || '';
+            const apiKeyStatus = apiKey ? 'success' : 'error';
+            const apiKeyMessage = apiKey ? 
+                `✅ OPENROUTER_API_KEY is set (${apiKey.length} characters)` : 
+                '❌ OPENROUTER_API_KEY is not set';
+            
+            results.innerHTML += `
+                <div class="test-result ${apiKeyStatus}">
+                    <h3>API Key Test</h3>
+                    <p>${apiKeyMessage}</p>
+                    <p><strong>Value:</strong> <code>${apiKey ? '••••••••••••••••' : 'Not set'}</code></p>
+                </div>
+            `;
+            
+            // Test SITE_URL
+            const siteUrl = window.SITE_URL || window.location.origin;
+            const siteUrlStatus = siteUrl ? 'success' : 'warning';
+            
+            results.innerHTML += `
+                <div class="test-result ${siteUrlStatus}">
+                    <h3>Site URL Test</h3>
+                    <p>✅ SITE_URL is set</p>
+                    <p><strong>Value:</strong> <code>${siteUrl}</code></p>
+                </div>
+            `;
+            
+            // Test SITE_NAME
+            const siteName = window.SITE_NAME || 'PnCoder';
+            const siteNameStatus = siteName ? 'success' : 'warning';
+            
+            results.innerHTML += `
+                <div class="test-result ${siteNameStatus}">
+                    <h3>Site Name Test</h3>
+                    <p>✅ SITE_NAME is set</p>
+                    <p><strong>Value:</strong> <code>${siteName}</code></p>
+                </div>
+            `;
+            
+            // Test API connection
+            if (apiKey) {
+                testAPIConnection(apiKey, siteUrl, siteName);
+            } else {
+                results.innerHTML += `
+                    <div class="test-result error">
+                        <h3>API Connection Test</h3>
+                        <p>❌ Cannot test API connection without API key</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function testAPIConnection(apiKey, siteUrl, siteName) {
+            const results = document.getElementById('test-results');
+            
+            try {
+                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'HTTP-Referer': siteUrl,
+                        'X-Title': siteName,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'microsoft/phi-3-mini-128k-instruct:free',
+                        messages: [
+                            {
+                                role: 'user',
+                                content: 'Hello, this is a test message.'
+                            }
+                        ],
+                        max_tokens: 50,
+                        temperature: 0.7
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    results.innerHTML += `
+                        <div class="test-result success">
+                            <h3>API Connection Test</h3>
+                            <p>✅ API connection successful!</p>
+                            <p><strong>Response:</strong> ${data.choices[0].message.content}</p>
+                        </div>
+                    `;
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    results.innerHTML += `
+                        <div class="test-result error">
+                            <h3>API Connection Test</h3>
+                            <p>❌ API connection failed</p>
+                            <p><strong>Status:</strong> ${response.status}</p>
+                            <p><strong>Error:</strong> ${errorData.error?.message || response.statusText}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                results.innerHTML += `
+                    <div class="test-result error">
+                        <h3>API Connection Test</h3>
+                        <p>❌ API connection failed</p>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Run tests when page loads
+        testEnvironmentVariables();
+    </script>
+</body>
+</html>

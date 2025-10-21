@@ -12,18 +12,31 @@ class PnCoder {
         this.loadSettings();
         this.renderMessages();
         this.updateCharCount();
+        
+        // Diagnostic logging
+        console.log('PnCoder initialized with:');
+        console.log('- API Key:', this.apiKey ? 'Present' : 'Missing');
+        console.log('- Site URL:', this.siteUrl);
+        console.log('- Site Name:', this.siteName);
+        
+        if (!this.apiKey) {
+            console.warn('⚠️ API key not found! Please set OPENROUTER_API_KEY environment variable.');
+        }
     }
 
     getEnvironmentVariable(name) {
         // Try to get from window object (set by Netlify)
         if (window[name]) {
+            console.log(`Environment variable ${name} found in window object`);
             return window[name];
         }
         // Try to get from process.env (if available)
         if (typeof process !== 'undefined' && process.env && process.env[name]) {
+            console.log(`Environment variable ${name} found in process.env`);
             return process.env[name];
         }
         // Fallback to empty string
+        console.log(`Environment variable ${name} not found`);
         return '';
     }
 
@@ -136,7 +149,19 @@ class PnCoder {
             this.addMessage('assistant', response);
         } catch (error) {
             console.error('API Error:', error);
-            this.addMessage('assistant', `Sorry, I encountered an error: ${error.message}`);
+            
+            // If all models fail, provide a helpful fallback message
+            if (error.message.includes('Provider returned error')) {
+                this.addMessage('assistant', `I'm having trouble connecting to the AI service. This might be due to:
+                
+• **API key issues** - Please check your OPENROUTER_API_KEY environment variable
+• **Model availability** - The free models might be temporarily unavailable
+• **Rate limiting** - Please try again in a few moments
+
+Please contact the administrator to verify the API configuration.`);
+            } else {
+                this.addMessage('assistant', `Sorry, I encountered an error: ${error.message}`);
+            }
         } finally {
             this.hideLoading();
         }
@@ -230,9 +255,10 @@ class PnCoder {
     async callAPIWithRetry(message, maxRetries = 2) {
         // Try different models if the free one fails
         const models = [
-            'qwen/qwen3-coder:free',
-            'qwen/qwen2.5-coder:7b',
-            'microsoft/phi-3-mini-128k-instruct:free'
+            'microsoft/phi-3-mini-128k-instruct:free',
+            'meta-llama/llama-3.2-3b-instruct:free',
+            'google/gemma-2-2b-it:free',
+            'qwen/qwen2.5-coder:7b'
         ];
         
         for (let modelIndex = 0; modelIndex < models.length; modelIndex++) {
@@ -537,24 +563,30 @@ class PnCoder {
         console.log('Site URL:', this.siteUrl);
         console.log('Site Name:', this.siteName);
         
+        if (!this.apiKey) {
+            this.showNotification('API key not configured. Please set OPENROUTER_API_KEY environment variable.', 'error');
+            return;
+        }
+        
         try {
+            // Test with a simple, reliable model first
             const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${this.apiKey}`,
                     'HTTP-Referer': this.siteUrl || window.location.origin,
-                    'X-Title': this.siteName,
+                    'X-Title': this.siteName || 'PnCoder',
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    model: 'qwen/qwen3-coder:free',
+                    model: 'microsoft/phi-3-mini-128k-instruct:free',
                     messages: [
                         {
                             role: 'user',
                             content: 'Hello, this is a test message.'
                         }
                     ],
-                    max_tokens: 100,
+                    max_tokens: 50,
                     temperature: 0.7
                 })
             });
