@@ -132,25 +132,11 @@ class PnCoder {
         this.showLoading();
 
         try {
-            const response = await this.callAPI(message);
+            const response = await this.callAPIWithRetry(message);
             this.addMessage('assistant', response);
         } catch (error) {
             console.error('API Error:', error);
-            let errorMessage = 'Sorry, I encountered an error. ';
-            
-            if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-                errorMessage += 'Please check your API key in settings.';
-            } else if (error.message.includes('403') || error.message.includes('Forbidden')) {
-                errorMessage += 'API access denied. Please check your API key and permissions.';
-            } else if (error.message.includes('429')) {
-                errorMessage += 'Rate limit exceeded. Please try again later.';
-            } else if (error.message.includes('Provider returned error')) {
-                errorMessage += 'The AI provider returned an error. Please check your API key and try again.';
-            } else {
-                errorMessage += error.message;
-            }
-            
-            this.addMessage('assistant', errorMessage);
+            this.addMessage('assistant', `Sorry, I encountered an error: ${error.message}`);
         } finally {
             this.hideLoading();
         }
@@ -161,29 +147,48 @@ class PnCoder {
         console.log('Site URL:', this.siteUrl);
         console.log('Site Name:', this.siteName);
         
+        // Prepare messages with proper context management
+        const systemMessage = {
+            role: 'system',
+            content: 'You are PnCoder, a helpful AI programming assistant. You help users with programming questions, code reviews, debugging, and building applications. Always provide clear, well-formatted code examples and explanations.'
+        };
+        
+        // Limit context to avoid token limits
+        const recentMessages = this.messages.slice(-8); // Reduced from 10 to 8
+        const userMessage = {
+            role: 'user',
+            content: message
+        };
+        
+        const allMessages = [systemMessage, ...recentMessages, userMessage];
+        
+        // Calculate approximate token count (rough estimate: 1 token ≈ 4 characters)
+        const totalChars = allMessages.reduce((sum, msg) => sum + msg.content.length, 0);
+        const estimatedTokens = Math.ceil(totalChars / 4);
+        
+        console.log('Estimated tokens:', estimatedTokens);
+        
+        // Adjust max_tokens based on context
+        const maxTokens = Math.min(2000, Math.max(500, 4000 - estimatedTokens));
+        
         const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${this.apiKey}`,
                 'HTTP-Referer': this.siteUrl || window.location.origin,
-                'X-Title': this.siteName,
+                'X-Title': this.siteName || 'PnCoder',
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 model: 'qwen/qwen3-coder:free',
-                messages: [
-                    {
-                        role: 'system',
-                        content: 'You are PnCoder, a helpful AI programming assistant. You help users with programming questions, code reviews, debugging, and building applications. Always provide clear, well-formatted code examples and explanations.'
-                    },
-                    ...this.messages.slice(-10), // Keep last 10 messages for context
-                    {
-                        role: 'user',
-                        content: message
-                    }
-                ],
-                max_tokens: 4000,
-                temperature: 0.7
+                messages: allMessages,
+                max_tokens: maxTokens,
+                temperature: 0.7,
+                stream: false,
+                // Add additional parameters for better compatibility
+                top_p: 0.9,
+                frequency_penalty: 0,
+                presence_penalty: 0
             })
         });
 
@@ -193,11 +198,149 @@ class PnCoder {
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             console.error('API Error Response:', errorData);
-            throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`);
+            
+            // Handle specific error cases
+            if (response.status === 401) {
+                throw new Error('Invalid API key. Please check your OPENROUTER_API_KEY environment variable.');
+            } else if (response.status === 403) {
+                throw new Error('API access forbidden. Please check your API key permissions.');
+            } else if (response.status === 429) {
+                throw new Error('Rate limit exceeded. Please try again in a few moments.');
+            } else if (response.status === 400) {
+                throw new Error(`Bad request: ${errorData.error?.message || 'Invalid request parameters'}`);
+            } else if (response.status === 500) {
+                throw new Error('Server error. Please try again later.');
+            } else {
+                throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`);
+            }
         }
 
         const data = await response.json();
         console.log('API Response:', data);
+        
+        // Check if response has the expected structure
+        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+            console.error('Unexpected API response structure:', data);
+            throw new Error('Invalid response format from API');
+        }
+        
+        return data.choices[0].message.content;
+    }
+
+    async callAPIWithRetry(message, maxRetries = 2) {
+        // Try different models if the free one fails
+        const models = [
+            'qwen/qwen3-coder:free',
+            'qwen/qwen2.5-coder:7b',
+            'microsoft/phi-3-mini-128k-instruct:free'
+        ];
+        
+        for (let modelIndex = 0; modelIndex < models.length; modelIndex++) {
+            const currentModel = models[modelIndex];
+            console.log(`Trying model: ${currentModel}`);
+            
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                try {
+                    console.log(`API attempt ${attempt}/${maxRetries} with model ${currentModel}`);
+                    return await this.callAPIWithModel(message, currentModel);
+                } catch (error) {
+                    console.error(`API attempt ${attempt} failed with model ${currentModel}:`, error);
+                    
+                    // Don't retry for certain errors
+                    if (error.message.includes('Invalid API key') || 
+                        error.message.includes('API access forbidden') ||
+                        error.message.includes('Bad request')) {
+                        throw error;
+                    }
+                    
+                    // If this is the last attempt for this model, try next model
+                    if (attempt === maxRetries) {
+                        if (modelIndex < models.length - 1) {
+                            console.log(`Model ${currentModel} failed, trying next model...`);
+                            break; // Try next model
+                        } else {
+                            throw error; // All models failed
+                        }
+                    } else {
+                        // Wait before retry (exponential backoff)
+                        const delay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s...
+                        console.log(`Retrying in ${delay}ms...`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    }
+                }
+            }
+        }
+    }
+
+    async callAPIWithModel(message, model) {
+        // Prepare messages with proper context management
+        const systemMessage = {
+            role: 'system',
+            content: 'You are PnCoder, a helpful AI programming assistant. You help users with programming questions, code reviews, debugging, and building applications. Always provide clear, well-formatted code examples and explanations.'
+        };
+        
+        // Limit context to avoid token limits
+        const recentMessages = this.messages.slice(-8);
+        const userMessage = {
+            role: 'user',
+            content: message
+        };
+        
+        const allMessages = [systemMessage, ...recentMessages, userMessage];
+        
+        // Calculate approximate token count
+        const totalChars = allMessages.reduce((sum, msg) => sum + msg.content.length, 0);
+        const estimatedTokens = Math.ceil(totalChars / 4);
+        
+        // Adjust max_tokens based on context
+        const maxTokens = Math.min(2000, Math.max(500, 4000 - estimatedTokens));
+        
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${this.apiKey}`,
+                'HTTP-Referer': this.siteUrl || window.location.origin,
+                'X-Title': this.siteName || 'PnCoder',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: model,
+                messages: allMessages,
+                max_tokens: maxTokens,
+                temperature: 0.7,
+                stream: false,
+                top_p: 0.9,
+                frequency_penalty: 0,
+                presence_penalty: 0
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error('API Error Response:', errorData);
+            
+            if (response.status === 401) {
+                throw new Error('Invalid API key. Please check your OPENROUTER_API_KEY environment variable.');
+            } else if (response.status === 403) {
+                throw new Error('API access forbidden. Please check your API key permissions.');
+            } else if (response.status === 429) {
+                throw new Error('Rate limit exceeded. Please try again in a few moments.');
+            } else if (response.status === 400) {
+                throw new Error(`Bad request: ${errorData.error?.message || 'Invalid request parameters'}`);
+            } else if (response.status === 500) {
+                throw new Error('Server error. Please try again later.');
+            } else {
+                throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`);
+            }
+        }
+
+        const data = await response.json();
+        
+        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+            console.error('Unexpected API response structure:', data);
+            throw new Error('Invalid response format from API');
+        }
+        
         return data.choices[0].message.content;
     }
 
